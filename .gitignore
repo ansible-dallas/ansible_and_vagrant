@@ -1,0 +1,11 @@
+.vagrant
+*.box
+*.asc
+*.pem
+*.tar
+*.vault
+*.vscode
+gpg.sh
+id_rsa*
+servers.yml
+test.txt

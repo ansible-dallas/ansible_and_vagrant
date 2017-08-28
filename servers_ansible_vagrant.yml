@@ -1,0 +1,60 @@
+---
+# List of VirtualBox guests (servers) and attributes used within the Vagrantfile
+#
+# FYI...
+#  Leave the Ansible server (controller) as the last guest.
+#  This will ensure that all other servers are "vagrant up" before Ansible
+#  provisions them with the playbooks and/or roles.
+
+
+domain_name_suffix: ".dev"
+ip_prefix: "172.18.1."
+
+provision_files:
+  - { src: "./ansible/scripts/ansible_env.sh", dest: "~/ansible_env.sh"}
+
+synced_folder_home_disabled: true
+synced_folder_vagrant_disabled: true
+
+vbguest_auto_update: true
+
+# See the below links on how anchor (&), reference (*) and hash merge (<<: )
+# tags are used in order to keep this file maintainable (DRY - Don't Repeat Yourself):
+#  http://yaml.org/YAML_for_ruby.html#aliases_and_anchors
+#  http://yaml.org/YAML_for_ruby.html#merge_key
+#  http://atechie.net/2009/07/merging-hashes-in-yaml-conf-files/
+
+execute_playbook: &execute_playbook
+  limit: "all"
+  execute: true
+
+common_server_settings: &common_server_settings
+  create: false
+  bootstrap_file: "./ansible/scripts/bootstrap_all.sh"
+  ansible_galaxy:
+  ansible_playbook:
+  box_name: "centos/7"
+  box_version: 1707.01
+  memory: 256
+
+servers:
+  - name: test
+    ip: "21"
+    <<: *common_server_settings
+    create: true
+
+  - name: controller
+    ip: "25"
+    forwarded_ports:
+      - { guest: 8080, host: 19093, protocol: "tcp" }
+      - { guest: 5000, host: 16002, protocol: "tcp" }
+    <<: *common_server_settings
+    create: true
+    memory: 512
+    bootstrap_file: "./ansible/scripts/bootstrap_ansible.sh"
+    ansible_playbook:
+      ### Test connectivity to all nodes provisioned.
+      - name: 'stack_test'
+        playbook: 'stack_test.yml'
+        extra_vars: "some_nodes=nodes"
+        <<: *execute_playbook

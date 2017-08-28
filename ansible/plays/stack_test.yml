@@ -1,0 +1,15 @@
+---
+# site yaml file for testing the nodes within the 'stack'...
+
+- name: testing the 'stack'
+  hosts: "{{ some_nodes }}"
+  gather_facts: no
+
+  tasks:
+
+    - name: Iterate through the non-windows defined list of nodes
+      ping: "{{ item }}"
+      with_items: "{{ ansible_play_hosts }}"
+      when: internal_os != "windows"
+      register: ping_results
+
